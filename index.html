@@ -835,6 +835,51 @@ tr.patient-row:hover { background: var(--c-accent-lt); }
       <button class="btn btn-primary btn-lg" style="width:100%;margin-top:8px" id="login-btn" onclick="handleLogin()">
         Ingresar
       </button>
+      <div style="text-align:center;margin-top:16px;font-size:14px">
+        ¿No tienes cuenta? <a href="#" onclick="showRegister()" style="color:var(--c-accent);font-weight:600;text-decoration:none">Regístrate aquí</a>
+      </div>
+    </div>
+
+    <div class="login-footer">
+      JCSaludClick · Historias Clínicas Seguras
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PANTALLA: REGISTRO
+     ============================================================ -->
+<div id="screen-register" class="hidden">
+  <div class="login-box">
+    <div class="login-brand">
+      <div class="logo-mark">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <h1>JCSaludClick</h1>
+      <p>Crea tu cuenta de profesional</p>
+    </div>
+
+    <div class="login-card">
+      <h2>Registro de usuario</h2>
+      <div id="register-error" class="hidden" style="background: var(--c-danger-lt); color: var(--c-danger); border: 1px solid #f1b8bb; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 16px;"></div>
+      <div class="form-group">
+        <label for="reg-fullname">Nombre completo</label>
+        <input type="text" id="reg-fullname" placeholder="Ej. Dr. Juan Pérez">
+      </div>
+      <div class="form-group">
+        <label for="reg-user">Usuario</label>
+        <input type="text" id="reg-user" placeholder="Crea un nombre de usuario">
+      </div>
+      <div class="form-group">
+        <label for="reg-pass">Contraseña</label>
+        <input type="password" id="reg-pass" placeholder="Crea una contraseña">
+      </div>
+      <button class="btn btn-primary btn-lg" style="width:100%;margin-top:8px" id="register-btn" onclick="handleRegister()">
+        Registrarse
+      </button>
+      <div style="text-align:center;margin-top:16px;font-size:14px">
+        ¿Ya tienes cuenta? <a href="#" onclick="showLogin()" style="color:var(--c-accent);font-weight:600;text-decoration:none">Inicia sesión</a>
+      </div>
     </div>
 
     <div class="login-footer">
@@ -1206,6 +1251,58 @@ async function handleLogin() {
   btn.textContent = 'Ingresar';
 }
 
+async function handleRegister() {
+  const fullName = document.getElementById('reg-fullname').value.trim();
+  const user = document.getElementById('reg-user').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const errEl = document.getElementById('register-error');
+  const btn = document.getElementById('register-btn');
+
+  if (!fullName || !user || !pass) {
+    errEl.textContent = 'Completa todos los campos.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Registrando…';
+  errEl.classList.add('hidden');
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'register', fullName, username: user, password: pass }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showToast('Registro exitoso. Ahora puedes iniciar sesión.', 'success');
+      showLogin();
+      document.getElementById('login-user').value = user;
+    } else {
+      errEl.textContent = data.error || 'Error al registrar usuario.';
+      errEl.classList.remove('hidden');
+    }
+  } catch(e) {
+    errEl.textContent = 'Error de conexión. Verifica la URL del script.';
+    errEl.classList.remove('hidden');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Registrarse';
+}
+
+function showRegister() {
+  showScreen('screen-register');
+  document.getElementById('register-error').classList.add('hidden');
+}
+
+function showLogin() {
+  showScreen('screen-login');
+  document.getElementById('login-error').classList.add('hidden');
+}
+
 function logout() {
   confirmDialog('Cerrar sesión', '¿Deseas cerrar tu sesión actual?', () => {
     sessionStorage.removeItem('jc_session');
@@ -1231,8 +1328,11 @@ function showLoggedIn() {
 // NAVEGACIÓN ENTRE PANTALLAS
 // ============================================================
 function showScreen(id) {
-  ['screen-login','screen-home','screen-patient-form','screen-search','screen-profile']
-    .forEach(s => document.getElementById(s).classList.add('hidden'));
+  ['screen-login','screen-register','screen-home','screen-patient-form','screen-search','screen-profile']
+    .forEach(s => {
+      const el = document.getElementById(s);
+      if (el) el.classList.add('hidden');
+    });
   document.getElementById(id).classList.remove('hidden');
 }
 
